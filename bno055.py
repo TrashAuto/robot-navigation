@@ -1,8 +1,9 @@
 import time
-import board
 import adafruit_bno055
+import busio
+import board
 
-i2c = board.I2C()
+i2c = busio.I2C(board.SCL, board.SDA)
 sensor = adafruit_bno055.BNO055_I2C(i2c)
 
 # Initialize state variables
