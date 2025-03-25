@@ -1,2 +1,2 @@
 # distance-measurements
-Raspberri Pi firmware for distance measurements with parallax cameras
+Raspberry Pi firmware for distance and angle measurements with BNO055 IMU
