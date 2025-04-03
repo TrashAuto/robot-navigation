@@ -2,9 +2,9 @@ import time
 import navigation
 import gpio
 
-def move_forward_until(distance_cm, mode):
+def move_forward_until(distance_cm, mode, direction):
     if mode == "path":
-        navigation.start_path_distance()
+        navigation.start_path_distance(direction)
     elif mode == "object":
         navigation.start_garbage_distance()
     
@@ -22,9 +22,9 @@ def move_forward_until(distance_cm, mode):
         
         time.sleep(0.1)
 
-def move_backward_until(distance_cm, mode):
+def move_backward_until(distance_cm, mode, direction):
     if mode == "path":
-        navigation.start_path_distance()
+        navigation.start_path_distance(direction)
     elif mode == "object":
         navigation.start_garbage_distance()
     

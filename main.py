@@ -3,62 +3,88 @@ import math
 import time
 
 # Import modules
-from navigation import get_distance, get_yaw, detect_garbage, detect_obstacle
-from movement import move_forward, move_backward, stop_moving, turn_left, turn_right, stop_turning, collect_garbage
+from motion import move_forward_until, move_backward_until, turn_left_until, turn_right_until
+from gpio import move_forward, collect_garbage
+from classification import run_ml_pipeline
+from perception import detect_object_of_interest, is_tall_object_present
+from navigation import start_path_distance, update_path_distance, reset_path_distance
 
-def loop(perimeter_x, perimeter_y):
-    # Constants
-    observed_distance = 5.0  # meters
-    observed_angle = math.radians(45)
-    side_distance = math.cos(observed_angle) * observed_distance / math.sin(observed_angle)
+# Declare parameters
+PERIMETER_X = 10
+PERIMETER_Y = 10
+observed_distance = 5.0  # Example observed distance in meters
+observed_angle = math.radians(45)
+side_distance = math.cos(observed_angle) * observed_distance / math.sin(observed_angle)
 
+def loop(PERIMETER_X, PERIMETER_Y):
+    start_path_distance("y")
+    start_path_distance("x")
+    
     while True:
-        distance = get_distance()
-        current_angle = get_yaw()
+        move_forward_until(0.1, "path", "y")
+        
+        distance_travelled_y = update_path_distance("y")
+        distance_travelled_x = update_path_distance("x")
 
-        # Decompose distance into components based on heading
-        dx = distance * math.cos(math.radians(current_angle))
-        dy = distance * math.sin(math.radians(current_angle))
+        if distance_travelled_y >= 0.8 * PERIMETER_Y:
+            turn_right_until(90, "path")
+            move_forward_until(side_distance * 2, "path", "x")
+            turn_right_until(90, "path")
+            reset_path_distance("y")
+            start_path_distance("y")
 
-        global distance_travelled_x, distance_travelled_y
-        distance_travelled_x += dx
-        distance_travelled_y += dy
-
-        move(0.5)
-
-        if distance_travelled_y >= 0.8 * perimeter_y:
-            turn(90)
-            move(side_distance * 2)
-            turn(90)
-            distance_travelled_y = 0.0
-
-        if distance_travelled_x >= 0.8 * perimeter_x:
-            turn(90)
-            move(perimeter_x)
-            turn(90)
-            distance_travelled_x = 0.0
-
-        if detect_garbage():
-            garbage_event()
-
-        if detect_obstacle():
-            obstacle_event()
-
-def garbage_event():
-    turn(45)       # Replace with actual calculated garbage angle
-    move(2.0)      # Replace with actual distance to garbage
-    collection_mechanism()
-    move(-2.0)
-    turn(-45)
-
-def obstacle_event():
-    turn(90)
-    move(3.0)
-    turn(-90)
-    move(3.0)
-    turn(-90)
-    move(3.0)
-    turn(90)
+        if distance_travelled_x >= 0.8 * PERIMETER_X:
+            turn_right_until(90, "path")
+            move_forward_until(0.8 * PERIMETER_X, "path", "y")
+            turn_right_until(90, "path")
+            reset_path_distance("x")
+            start_path_distance("y")
+            
+        if detect_object_of_interest and (object_angle > 10 and object_distance > 1):
+            # Double check requirements to ensure object is off the path
+            object_event_off_path(object_angle, object_distance) # need lidar output
+            # robot will travel off the path
+            
+        elif detect_object_of_interest and not (object_angle > 10 and object_distance < 1):
+            # Double check requirements to ensure object is on the path
+            object_event_on_path(object_angle, object_distance)
+        
+        time.sleep(0.1)
+            
+def object_event_off_path(object_angle, object_distance):
+    if object_angle < 0: 
+        turn_left_until(-object_angle, "object") 
+    else: 
+        turn_right_until(object_angle, "object")
+    
+    move_forward_until(object_distance, "object")
+    
+    if not is_tall_object_present(object_distance * 1000) and run_ml_pipeline():
+        collect_garbage()
+        
+    move_backward_until(object_distance, "object")
+    
+    if object_angle < 0:
+        turn_right_until(-object_angle, "object")
+    else:
+        turn_left_until(object_angle, "object")
+        
+def object_event_on_path(object_angle, object_distance):
+    move_forward_until(object_distance, "object")
+    if not is_tall_object_present(object_distance * 1000) and run_ml_pipeline():
+        collect_garbage()
+    else:
+        # Move around object
+        obstacle_event(object_width)
+    
+def obstacle_event(object_width):
+    turn_right_until(90, "object")
+    move_forward_until(2 * object_width)
+    turn_left_until(90, "object")
+    move_forward_until(2 * object_width)
+    turn_left_until(90, "object")
+    move_forward_until(2 * object_width)
+    turn_right_until(90, "object")
 
 if __name__ == "__main__":
-    loop(perimeter_x=20, perimeter_y=20)
+    loop(PERIMETER_X, PERIMETER_Y)
