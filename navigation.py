@@ -4,9 +4,7 @@ import adafruit_bno055
 import busio
 import board
 from math import pi
-from gpiozero import Button, DistanceSensor
-from perception import detect_object_of_interest
-from classification import run_ml_pipeline
+from gpiozero import Button
 
 ## Rotary wheel encoder setup ##
 
@@ -151,29 +149,46 @@ def reset_garbage_angle():
 
 # Path distance tracking
 path_distance_flag = False
-path_distance = 0.0
-path_distance_initial = 0.0
+path_distance_y = 0.0
+path_distance_y_initial = 0.0
+path_distance_x = 0.0
+path_distance_x_initial = 0.0
 
-def start_path_distance():
-    global path_distance_flag, path_distance_initial
+def start_path_distance(direction):
+    global path_distance_flag, path_distance_x_initial, path_distance_y_initial
     path_distance_flag = True
-    path_distance_initial = (left_count + right_count) * cm_per_pulse / 2
+    if direction == "x":
+        path_distance_x_initial = (left_count + right_count) * cm_per_pulse / 2
+    elif direction == "y":
+        path_distance_y_initial = (left_count + right_count) * cm_per_pulse / 2
     
-def update_path_distance():
-    global path_distance
-    if garbage_distance_flag or garbage_angle_flag:
-        return path_distance
+def update_path_distance(direction):
+    global path_distance_x, path_distance_y
     
-    if path_distance_flag:
-        path_distance_new = (left_count + right_count) * cm_per_pulse / 2
-        path_distance = path_distance_new - path_distance_initial
+    if direction == "x":
+        if garbage_distance_flag or garbage_angle_flag:
+            return path_distance_x
+        if path_distance_flag:
+            path_distance_x_new = (left_count + right_count) * cm_per_pulse / 2
+            path_distance_x = path_distance_x_new - path_distance_x_initial
+        return path_distance_x
         
-    return path_distance
+    elif direction == "y":
+        if garbage_distance_flag or garbage_angle_flag:
+            return path_distance_y
+        if path_distance_flag:
+            path_distance_y_new = (left_count + right_count) * cm_per_pulse / 2
+            path_distance_y = path_distance_y_new - path_distance_y_initial
+        return path_distance_y
 
-def reset_path_distance():
-    global path_distance_flag, path_distance
+def reset_path_distance(direction):
+    global path_distance_flag, path_distance_x, path_distance_y
     path_distance_flag = False
-    path_distance = 0.0
+    
+    if direction == "x":
+        path_distance_x = 0.0
+    elif direction == "y":
+        path_distance_y = 0.0
 
 # Path angle tracking
 path_angle_flag = False
