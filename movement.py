@@ -13,12 +13,12 @@ GPIO.output(24, GPIO.LOW)
 GPIO.output(25, GPIO.LOW)
 
 # Motor control function definitions
-def move_forward(): # Move forward: 001
+def move_forward(cm): # Move forward: 001
     GPIO.output(23, GPIO.LOW)
     GPIO.output(24, GPIO.LOW)
     GPIO.output(25, GPIO.HIGH)
 
-def move_backward(): # Move backward: 010
+def move_backward(cm): # Move backward: 010
     GPIO.output(23, GPIO.LOW)
     GPIO.output(24, GPIO.HIGH)
     GPIO.output(25, GPIO.LOW)
@@ -28,12 +28,12 @@ def stop_moving(): # Stop moving: 011
     GPIO.output(24, GPIO.HIGH)
     GPIO.output(25, GPIO.HIGH)
 
-def turn_right(): # Turn right: 100
+def turn_right(deg): # Turn right: 100
     GPIO.output(23, GPIO.HIGH)
     GPIO.output(24, GPIO.LOW)
     GPIO.output(25, GPIO.LOW)
 
-def turn_left(): # Turn left: 101
+def turn_left(deg): # Turn left: 101
     GPIO.output(23, GPIO.HIGH)
     GPIO.output(24, GPIO.LOW)
     GPIO.output(25, GPIO.HIGH)
