@@ -13,37 +13,37 @@ GPIO.output(24, GPIO.LOW)
 GPIO.output(25, GPIO.LOW)
 
 # Motor control function definitions
-def move_forward(): # Move forward: 001
+def stop_moving(): # Stop moving: 000
     GPIO.output(23, GPIO.LOW)
     GPIO.output(24, GPIO.LOW)
-    GPIO.output(25, GPIO.HIGH)
-
-def move_backward(): # Move backward: 010
-    GPIO.output(23, GPIO.LOW)
-    GPIO.output(24, GPIO.HIGH)
     GPIO.output(25, GPIO.LOW)
     
-def stop_moving(): # Stop moving: 011
+def stop_turning(): # Stop turning: 001
+    GPIO.output(23, GPIO.LOW)
+    GPIO.output(24, GPIO.LOW)
+    GPIO.output(25, GPIO.HIGH)
+
+def move_forward(): # Move forward: 010
+    GPIO.output(23, GPIO.LOW)
+    GPIO.output(24, GPIO.HIGH)
+    GPIO.output(25, GPIO.LOW)
+
+def move_backward(): # Move backward: 011
     GPIO.output(23, GPIO.LOW)
     GPIO.output(24, GPIO.HIGH)
     GPIO.output(25, GPIO.HIGH)
 
-def turn_right(): # Turn right: 100
+def turn_left(): # Turn left: 100
     GPIO.output(23, GPIO.HIGH)
     GPIO.output(24, GPIO.LOW)
     GPIO.output(25, GPIO.LOW)
 
-def turn_left(): # Turn left: 101
+def turn_right(): # Turn right: 101
     GPIO.output(23, GPIO.HIGH)
     GPIO.output(24, GPIO.LOW)
     GPIO.output(25, GPIO.HIGH)
 
-def stop_turning(): # Stop turning: 110
+def collect_garbage(): # Collect garbage: 110
     GPIO.output(23, GPIO.HIGH)
     GPIO.output(24, GPIO.HIGH)
     GPIO.output(25, GPIO.LOW)
-
-def collect_garbage(): # Collect garbage: 111
-    GPIO.output(23, GPIO.HIGH)
-    GPIO.output(24, GPIO.HIGH)
-    GPIO.output(25, GPIO.HIGH)
