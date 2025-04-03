@@ -3,7 +3,7 @@ import math
 import time
 
 # Import modules
-from sensors import get_distance, get_yaw, detect_garbage, detect_obstacle
+from navigation import get_distance, get_yaw, detect_garbage, detect_obstacle
 from movement import move_forward, move_backward, stop_moving, turn_left, turn_right, stop_turning, collect_garbage
 
 def loop(perimeter_x, perimeter_y):

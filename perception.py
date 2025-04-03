@@ -2,6 +2,18 @@ import math
 from rplidar import RPLidar
 from time import sleep
 
+## Ultrasonic sensor setup ##
+distance_sensor = DistanceSensor(echo=24, trigger=23, max_distance=2.5)
+def is_tall_object_present(lidar_distance_mm, tolerance_mm=150):
+    # Returns true if the ultrasonic sensor detects an object near the LiDAR
+    measured_mm = distance_sensor.distance * 1000
+    print(f"Ultrasonic Sensor measured distance: {measured_mm:.0f} mm")
+
+    if abs(measured_mm - lidar_distance_mm) <= tolerance_mm:
+        return True
+    return False
+
+## Lidar math and setup ##
 def polar_to_cartesian(angle_deg, distance_mm):
     angle_rad = math.radians(angle_deg)
     x = distance_mm * math.cos(angle_rad)
