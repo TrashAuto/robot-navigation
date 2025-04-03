@@ -4,8 +4,7 @@ import adafruit_bno055
 import busio
 import board
 from math import pi
-from gpiozero import Button
-from gpiozero import DistanceSensor
+from gpiozero import Button, DistanceSensor
 from perception import detect_object_of_interest
 from classification import run_ml_pipeline
 
