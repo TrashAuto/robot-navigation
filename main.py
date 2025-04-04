@@ -10,9 +10,9 @@ from perception import detect_object_of_interest, is_tall_object_present
 from navigation import start_path_distance, update_path_distance, reset_path_distance
 
 # Declare parameters
-PERIMETER_X = 10
-PERIMETER_Y = 10
-observed_distance = 5.0  # Example observed distance in meters
+PERIMETER_X = 500 # cm (5m^2) area
+PERIMETER_Y = 500
+observed_distance = 50
 observed_angle = math.radians(45)
 side_distance = math.cos(observed_angle) * observed_distance / math.sin(observed_angle)
 
