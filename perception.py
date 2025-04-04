@@ -13,6 +13,10 @@ def is_tall_object_present(lidar_distance_mm, tolerance_mm=150):
     if abs(measured_mm - lidar_distance_mm) <= tolerance_mm:
         return True
     return False
+import math
+from rplidar import RPLidar
+from time import sleep
+
 def polar_to_cartesian(angle_deg, distance_mm):
     angle_rad = math.radians(angle_deg)
     x = distance_mm * math.cos(angle_rad)
@@ -39,7 +43,8 @@ def detect_object_of_interest(
     attempt = 0
     objects_detected = []
 
-    print(f"\nScanning for objects in the 225 to 315 field of view... (max {max_attempts} attempts)")
+    print(f"\nScanning for objects in the 225° to 315° field of view... (max {max_attempts} attempts)")
+
     try:
         scan_points = []
 
@@ -123,8 +128,6 @@ def detect_object_of_interest(
                         estimated_span = 20  # enforce a minimum span for close objects
 
                     center_angle = (angles_sorted[0] + estimated_span / 2) % 360
-                    closest = min(distances)
-
                     width = 2 * avg_distance * math.tan(math.radians(estimated_span / 2))
 
                     if width < min_physical_width_mm:
@@ -132,7 +135,7 @@ def detect_object_of_interest(
 
                     size_class = "big" if width >= big_object_threshold_mm else "small"
 
-                    # Signed angle relative to 270
+                    # Signed angle relative to 270°
                     raw_relative = (center_angle - 270 + 540) % 360 - 180
                     relative_angle = round(raw_relative, 1)
                     direction = f"{relative_angle:+.1f} degrees relative to 270"
@@ -158,4 +161,41 @@ def detect_object_of_interest(
         lidar.stop_motor()
         lidar.disconnect()
 
-    return objects_detected
+    # sort and remove duplicate objects
+    deduped = []
+    used = [False] * len(objects_detected)
+
+    for i, obj in enumerate(objects_detected):
+        if used[i]:
+            continue
+
+        group = [obj]
+        used[i] = True
+
+        for j in range(i + 1, len(objects_detected)):
+            if used[j]:
+                continue
+
+            other = objects_detected[j]
+            angle_diff = abs(obj['relative_angle_deg'] - other['relative_angle_deg'])
+            dist_diff = abs(obj['distance_mm'] - other['distance_mm'])
+
+            if angle_diff <= 2 and dist_diff <= 150:
+                group.append(other)
+                used[j] = True
+
+        if group:
+            avg_obj = {
+                'width_mm': int(sum(o['width_mm'] for o in group) / len(group)),
+                'distance_mm': int(sum(o['distance_mm'] for o in group) / len(group)),
+                'angle_center_deg': round(sum(o['angle_center_deg'] for o in group) / len(group), 1),
+                'relative_angle_deg': round(sum(o['relative_angle_deg'] for o in group) / len(group), 1),
+                'size_class': max(group, key=lambda o: o['width_mm'])['size_class']
+            }
+            deduped.append(avg_obj)
+
+    if deduped:
+        deduped.sort(key=lambda obj: obj['distance_mm'])  # Sort by distance
+        return deduped[0]  # Return the closest object
+    else:
+        return None
