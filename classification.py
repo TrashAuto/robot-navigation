@@ -25,6 +25,7 @@ NON_GARBAGE_CLASSES = [
 # Thresholds
 CONFIDENCE_THRESHOLD = 0.3
 MAX_RETRIES = 5
+SECOND_LAYER_THRESHOLD = 0.7
 
 def load_pth_model(pth_model_path):
     model = models.efficientnet_b5(pretrained=False)
@@ -36,16 +37,17 @@ def capture_image(picam2):
     print("Adjusting focus... Please hold the object steady.")
     picam2.set_controls({"AfMode": 1})
     picam2.autofocus_cycle()
-    
+
     print("Locked! Capturing image...")
     i = 1
     while os.path.exists(f"test{i}.jpg"):
         i += 1
     image_path = f"test{i}.jpg"
-    
+
     picam2.capture_file(image_path)
     print(f"Image captured: {image_path}")
     return image_path
+
 def classify_with_pth(model, image_path):
     transform = transforms.Compose([
         transforms.Resize(256),
@@ -59,74 +61,32 @@ def classify_with_pth(model, image_path):
 
     with torch.no_grad():
         outputs = model(img_tensor)
-    
+
     probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
     confidence, predicted_class = probabilities.max(0)
 
     class_name = IMAGENET_CLASSES[predicted_class.item()]
-    
+
     print(f"First layer: {class_name} (Confidence: {confidence:.2f})")
-    
+
     if confidence < CONFIDENCE_THRESHOLD:
         print("Low confidence. Retrying...")
         return None
 
     return class_name
-
 def classify_with_pkl(model_path, image_path):
     try:
         learn = load_learner(model_path)
     except Exception as e:
         print(f"Failed to load model: {e}")
-        return None
+        return None, 0.0
 
     img = PILImage.create(image_path)
     pred, _, probs = learn.predict(img)
+    confidence = probs.max().item()
 
-    print(f"Garbage Model Final Decision: {pred} (Confidence: {probs.max():.2f})")
-    return pred
-
-def is_non_garbage_item(item):
-    return item.lower() in NON_GARBAGE_CLASSES
-def classify_with_pth(model, image_path):
-    transform = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    ])
-
-    img = Image.open(image_path).convert("RGB")
-    img_tensor = transform(img).unsqueeze(0)
-
-    with torch.no_grad():
-        outputs = model(img_tensor)
-    
-    probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
-    confidence, predicted_class = probabilities.max(0)
-
-    class_name = IMAGENET_CLASSES[predicted_class.item()]
-    
-    print(f"First layer: {class_name} (Confidence: {confidence:.2f})")
-    
-    if confidence < CONFIDENCE_THRESHOLD:
-        print("Low confidence. Retrying...")
-        return None
-
-    return class_name
-
-def classify_with_pkl(model_path, image_path):
-    try:
-        learn = load_learner(model_path)
-    except Exception as e:
-        print(f"Failed to load model: {e}")
-        return None
-
-    img = PILImage.create(image_path)
-    pred, _, probs = learn.predict(img)
-
-    print(f"Garbage Model Final Decision: {pred} (Confidence: {probs.max():.2f})")
-    return pred
+    print(f"Second layer: {pred} (Confidence: {confidence:.2f})")
+    return pred, confidence
 
 def is_non_garbage_item(item):
     return item.lower() in NON_GARBAGE_CLASSES
@@ -155,16 +115,17 @@ def run_ml_pipeline():
                 retry_count += 1
                 if retry_count >= MAX_RETRIES:
                     print("Stopping after max retries.")
-                    break
+                    return False
                 continue
 
             if is_non_garbage_item(detected_object):
-                print(f"Detected non-garbage object: {detected_object}. Stopping.")
-                break
+                print(f"Detected non-garbage object: {detected_object}.")
+                return False
 
             print(f"Passing {detected_object} to the garbage classifier...")
-            classify_with_pkl(pkl_model_path, image_path)
-            break
+            pred, confidence = classify_with_pkl(pkl_model_path, image_path)
+
+            return confidence >= SECOND_LAYER_THRESHOLD
 
     finally:
         print("Cleaning up camera...")
