@@ -2,6 +2,7 @@ import math
 from rplidar import RPLidar
 from time import sleep
 
+
 ## Ultrasonic sensor setup ##
 distance_sensor = DistanceSensor(echo=24, trigger=23, max_distance=2.5)
 def is_tall_object_present(lidar_distance_mm, tolerance_mm=150):
@@ -12,8 +13,6 @@ def is_tall_object_present(lidar_distance_mm, tolerance_mm=150):
     if abs(measured_mm - lidar_distance_mm) <= tolerance_mm:
         return True
     return False
-
-## Lidar math and setup ##
 def polar_to_cartesian(angle_deg, distance_mm):
     angle_rad = math.radians(angle_deg)
     x = distance_mm * math.cos(angle_rad)
@@ -29,7 +28,6 @@ def detect_object_of_interest(
     max_gap_mm=300,
     max_distance=2000,
     min_points=2,
-    min_proximity_mm=500,
     max_attempts=4,
     merge_cluster_threshold_mm=150
 ):
@@ -39,9 +37,9 @@ def detect_object_of_interest(
     sleep(1)
 
     attempt = 0
+    objects_detected = []
 
-    print(f"\n Scanning for objects in the 225 deg to 315 deg field of view... (max {max_attempts} attempts)")
-
+    print(f"\nScanning for objects in the 225 to 315 field of view... (max {max_attempts} attempts)")
     try:
         scan_points = []
 
@@ -129,31 +127,28 @@ def detect_object_of_interest(
 
                     width = 2 * avg_distance * math.tan(math.radians(estimated_span / 2))
 
-                    # print(f"   span: {estimated_span:.1f} deg, width: {width:.1f} mm, points: {len(cluster)}")
-
                     if width < min_physical_width_mm:
                         continue
 
                     size_class = "big" if width >= big_object_threshold_mm else "small"
 
-                    relative_angle = (center_angle - 270) % 360
-                    if relative_angle > 180:
-                        direction = f"{360 - int(relative_angle)} degrees right from zero"
-                    else:
-                        direction = f"{int(relative_angle)} degrees left from zero"
+                    # Signed angle relative to 270
+                    raw_relative = (center_angle - 270 + 540) % 360 - 180
+                    relative_angle = round(raw_relative, 1)
+                    direction = f"{relative_angle:+.1f} degrees relative to 270"
 
                     print(f" -> Detected object: ({size_class}, {int(avg_distance)} mm, {direction})")
 
-                    if size_class == "small" and avg_distance <= min_proximity_mm:
-                        return {
-                            'width_mm': int(width),
-                            'distance_mm': int(avg_distance),
-                            'angle_center_deg': round(center_angle, 1),
-                            'size_class': size_class
-                        }
+                    objects_detected.append({
+                        'width_mm': int(width),
+                        'distance_mm': int(avg_distance),
+                        'angle_center_deg': round(center_angle, 1),
+                        'relative_angle_deg': relative_angle,
+                        'size_class': size_class
+                    })
 
                 if attempt >= max_attempts:
-                    print("Max attempts reached. No valid object detected.")
+                    print("Max attempts reached.")
                     break
 
                 scan_points = []
@@ -163,4 +158,4 @@ def detect_object_of_interest(
         lidar.stop_motor()
         lidar.disconnect()
 
-    return None
+    return objects_detected
