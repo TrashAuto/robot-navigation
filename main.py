@@ -21,7 +21,25 @@ def loop(PERIMETER_X, PERIMETER_Y):
     start_path_distance("x")
     
     while True:
-        move_forward_until(0.1, "path", "y")
+        # Travel 50 cm and stop
+        move_forward_until(50, "path", "y")
+        
+        # Run LiDAR scan after stopping
+        objects = detect_object_of_interest()
+        
+        if objects:
+            object = objects[0]
+            
+            object_angle = object['relative_angle_deg']
+            object_distance = object['distance_mm'] / 10  # Convert to cm
+            object_width = object['width_mm'] / 10
+            
+            if abs(object_angle) > 10 and object_distance > 20:
+                # Object is off the path (confirm requirements)
+                object_event_off_path(object_distance, object_angle)
+            else:
+                # Object is on the path
+                object_event_on_path(object_distance, object_width)
         
         distance_travelled_y = update_path_distance("y")
         distance_travelled_x = update_path_distance("x")
@@ -38,21 +56,11 @@ def loop(PERIMETER_X, PERIMETER_Y):
             move_forward_until(0.8 * PERIMETER_X, "path", "y")
             turn_right_until(90, "path")
             reset_path_distance("x")
-            start_path_distance("y")
-            
-        if detect_object_of_interest:
-            object_angle = detect_object_of_interest[0]['relative_angle_deg']
-            object_distance = detect_object_of_interest[0]['distance_mm'] / 10  # Convert to cm
-            if object_angle > 10 and object_distance > 20:
-                # Object is off the path (confirm requirements)
-                object_event_off_path(object_angle, object_distance)
-            else:
-                # Object is on the path
-                object_event_on_path(object_angle, object_distance)
+            start_path_distance("x")
         
         time.sleep(0.1)
             
-def object_event_off_path(object_angle, object_distance):
+def object_event_off_path(object_distance, object_angle):
     if object_angle < 0: 
         turn_left_until(-object_angle, "object") 
     else: 
@@ -70,7 +78,7 @@ def object_event_off_path(object_angle, object_distance):
     else:
         turn_left_until(object_angle, "object")
         
-def object_event_on_path(object_angle, object_distance):
+def object_event_on_path(object_distance, object_width):
     move_forward_until(object_distance, "object")
     if not is_tall_object_present(object_distance * 1000) and run_ml_pipeline():
         collect_garbage()
