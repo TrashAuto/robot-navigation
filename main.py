@@ -4,7 +4,7 @@ import time
 
 # Import modules
 from motion import move_forward_until, move_backward_until, turn_left_until, turn_right_until
-from gpio import move_forward, collect_garbage
+from gpio import collect_garbage
 from classification import run_ml_pipeline
 from perception import detect_object_of_interest, is_tall_object_present
 from navigation import start_path_distance, update_path_distance, reset_path_distance
@@ -28,7 +28,7 @@ def loop(PERIMETER_X, PERIMETER_Y):
 
         if distance_travelled_y >= 0.8 * PERIMETER_Y:
             turn_right_until(90, "path")
-            move_forward_until(side_distance * 2, "path", "x")
+            move_forward_until(side_distance * 1.5, "path", "x")
             turn_right_until(90, "path")
             reset_path_distance("y")
             start_path_distance("y")
@@ -40,14 +40,15 @@ def loop(PERIMETER_X, PERIMETER_Y):
             reset_path_distance("x")
             start_path_distance("y")
             
-        if detect_object_of_interest and (object_angle > 10 and object_distance > 1):
-            # Double check requirements to ensure object is off the path
-            object_event_off_path(object_angle, object_distance) # need lidar output
-            # robot will travel off the path
-            
-        elif detect_object_of_interest and not (object_angle > 10 and object_distance < 1):
-            # Double check requirements to ensure object is on the path
-            object_event_on_path(object_angle, object_distance)
+        if detect_object_of_interest:
+            object_angle = detect_object_of_interest[0]['relative_angle_deg']
+            object_distance = detect_object_of_interest[0]['distance_mm'] / 10  # Convert to cm
+            if object_angle > 10 and object_distance > 20:
+                # Object is off the path (confirm requirements)
+                object_event_off_path(object_angle, object_distance)
+            else:
+                # Object is on the path
+                object_event_on_path(object_angle, object_distance)
         
         time.sleep(0.1)
             
