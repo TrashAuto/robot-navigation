@@ -18,7 +18,7 @@ right_B = 22
 ppr = 12
 decoding_factor = 2  # Pulse on rising and falling edges for 2x decoding
 eff_cpr = ppr * decoding_factor
-r = 10  # 10 cm wheel radius for testing purposes - measure later
+r = 3.65  # Radius
 cm_per_pulse = 2 * pi * r / eff_cpr
 
 # State
@@ -80,7 +80,8 @@ gyro_deadzone = 0.2  # Rudimentary high pass filter
 prev_time_imu = time.time()
 
 ## Navigation variables
-path_distance = 0.0         # Distance travelled on preset path (use to stay within perimeter)
+path_distance_x = 0.0       # Distance travelled on preset path (use to stay within perimeter)
+path_distance_y = 0.0       
 path_angle = 0.0            # Angle on preset path (use for maintaining heading or turning at end of preset path)
 garbage_distance = 0        # Distance travelled when collecting garbage (use to travel to and from detected objects)
 garbage_angle = 0.0         # Adjusted angle when collecting garbage (use to turn to and from detected objects)
