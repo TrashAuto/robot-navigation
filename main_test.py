@@ -10,8 +10,8 @@ from perception import detect_object_of_interest, is_tall_object_present
 from navigation import start_path_distance, update_path_distance, reset_path_distance
 
 # Declare parameters (all distances in cm)
-PERIMETER_X = 750
-PERIMETER_Y = 500
+PERIMETER_X = 5
+PERIMETER_Y = 5
 observed_distance = 50
 observed_angle = math.radians(45)
 side_distance = math.cos(observed_angle) * observed_distance / math.sin(observed_angle)
@@ -28,11 +28,10 @@ def loop(PERIMETER_X, PERIMETER_Y):
         print("Travelled 50 cm, running LiDAR scan...")
         
         # Run LiDAR scan after stopping
-        objects = detect_object_of_interest()
+        object = detect_object_of_interest()
         
-        if objects:
+        if object:
             print("Object detected!")
-            object = objects[0]
             
             object_angle = object['relative_angle_deg']
             object_distance = object['distance_mm'] / 10  # Convert to cm

@@ -26,11 +26,9 @@ def loop(PERIMETER_X, PERIMETER_Y):
         move_forward_until(50, "path", "y")
         
         # Run LiDAR scan after stopping
-        objects = detect_object_of_interest()
+        object = detect_object_of_interest()
         
-        if objects:
-            object = objects[0]
-            
+        if object:
             object_angle = object['relative_angle_deg']
             object_distance = object['distance_mm'] / 10  # Convert to cm
             object_width = object['width_mm'] / 10
