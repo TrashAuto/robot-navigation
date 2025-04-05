@@ -1,49 +1,55 @@
-# Import libraries
-import gpiozero as GPIO
+# Import GPIO library
+from gpiozero import OutputDevice
 
 # Declare GPIO pins as outputs
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(23, GPIO.OUT)
-GPIO.setup(24, GPIO.OUT)
-GPIO.setup(25, GPIO.OUT)
+pin23 = OutputDevice(23)
+pin24 = OutputDevice(24)
+pin25 = OutputDevice(25)
 
 # Default GPIO output: 000
-GPIO.output(23, GPIO.LOW)
-GPIO.output(24, GPIO.LOW)
-GPIO.output(25, GPIO.LOW)
+pin23.off()
+pin24.off()
+pin25.off()
 
-# Motor control function definitions
-def stop_moving(): # Stop moving: 000
-    GPIO.output(23, GPIO.LOW)
-    GPIO.output(24, GPIO.LOW)
-    GPIO.output(25, GPIO.LOW)
-    
-def stop_turning(): # Stop turning: 001
-    GPIO.output(23, GPIO.LOW)
-    GPIO.output(24, GPIO.LOW)
-    GPIO.output(25, GPIO.HIGH)
+# Motor control functions
+def stop_moving():  
+    # Stop moving: 000
+    pin23.off()
+    pin24.off()
+    pin25.off()
 
-def move_forward(): # Move forward: 010
-    GPIO.output(23, GPIO.LOW)
-    GPIO.output(24, GPIO.HIGH)
-    GPIO.output(25, GPIO.LOW)
+def stop_turning():  
+    # Stop turning: 001
+    pin23.off()
+    pin24.off()
+    pin25.on()
 
-def move_backward(): # Move backward: 011
-    GPIO.output(23, GPIO.LOW)
-    GPIO.output(24, GPIO.HIGH)
-    GPIO.output(25, GPIO.HIGH)
+def move_forward():  
+    # Move forward: 010
+    pin23.off()
+    pin24.on()
+    pin25.off()
 
-def turn_left(): # Turn left: 100
-    GPIO.output(23, GPIO.HIGH)
-    GPIO.output(24, GPIO.LOW)
-    GPIO.output(25, GPIO.LOW)
+def move_backward():  
+    # Move backward: 011
+    pin23.off()
+    pin24.on()
+    pin25.on()
 
-def turn_right(): # Turn right: 101
-    GPIO.output(23, GPIO.HIGH)
-    GPIO.output(24, GPIO.LOW)
-    GPIO.output(25, GPIO.HIGH)
+def turn_left():  
+    # Turn left: 100
+    pin23.on()
+    pin24.off()
+    pin25.off()
 
-def collect_garbage(): # Collect garbage: 110
-    GPIO.output(23, GPIO.HIGH)
-    GPIO.output(24, GPIO.HIGH)
-    GPIO.output(25, GPIO.LOW)
+def turn_right():  
+    # Turn right: 101
+    pin23.on()
+    pin24.off()
+    pin25.on()
+
+def collect_garbage():  
+    # Collect garbage: 110
+    pin23.on()
+    pin24.on()
+    pin25.off()
