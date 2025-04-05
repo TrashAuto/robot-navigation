@@ -1,10 +1,10 @@
 import math
 from rplidar import RPLidar
 from time import sleep
-
+from gpiozero import DistanceSensor
 
 ## Ultrasonic sensor setup 
-distance_sensor = DistanceSensor(echo=24, trigger=23, max_distance=2.5)
+distance_sensor = DistanceSensor(echo=12, trigger=16, max_distance=2.5)
 def is_tall_object_present(lidar_distance_mm, tolerance_mm=150):
     # Returns true if the ultrasonic sensor detects an object near the LiDAR
     measured_mm = distance_sensor.distance * 1000
