@@ -6,15 +6,15 @@ def move_forward_until(distance_cm, mode, direction):
     if mode == "path":
         navigation.start_path_distance(direction)
     elif mode == "object":
-        navigation.start_garbage_distance()
+        navigation.start_garbage_distance(direction)
     
     gpio.move_forward()
     
     while True:
         if mode == "path":
-            distance = navigation.update_path_distance()
+            distance = navigation.update_path_distance(direction)
         elif mode == "object":
-            distance = navigation.update_garbage_distance()
+            distance = navigation.update_garbage_distance(direction)
             
         if distance >= distance_cm:
             gpio.stop_moving()
@@ -26,15 +26,15 @@ def move_backward_until(distance_cm, mode, direction):
     if mode == "path":
         navigation.start_path_distance(direction)
     elif mode == "object":
-        navigation.start_garbage_distance()
+        navigation.start_garbage_distance(direction)
     
     gpio.move_backward()
     
     while True:
         if mode == "path":
-            distance = navigation.update_path_distance()
+            distance = navigation.update_path_distance(direction)
         elif mode == "object":
-            distance = navigation.update_garbage_distance()
+            distance = navigation.update_garbage_distance(direction)
             
         if distance <= distance_cm:
             gpio.stop_moving()
