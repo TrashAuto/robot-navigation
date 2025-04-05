@@ -16,8 +16,9 @@ observed_distance = 50
 observed_angle = math.radians(45)
 side_distance = math.cos(observed_angle) * observed_distance / math.sin(observed_angle)
 collection_distance = 10 # Distance between garbage and LiDAR when collecting garbage
+facing_up = True
 
-def loop(PERIMETER_X, PERIMETER_Y):
+def loop(PERIMETER_X, PERIMETER_Y, facing_up):
     start_path_distance("y")
     start_path_distance("x")
     
@@ -42,21 +43,35 @@ def loop(PERIMETER_X, PERIMETER_Y):
         
         distance_travelled_y = update_path_distance("y")
         distance_travelled_x = update_path_distance("x")
-
+        
         if distance_travelled_y >= 0.9 * PERIMETER_Y:
-            turn_right_until(90, "path")
-            move_forward_until(side_distance * 1.5, "path", "x")
-            turn_right_until(90, "path")
+            if facing_up:
+                turn_right_until(90, "path")
+                move_forward_until(side_distance * 1.5, "path", "x")
+                turn_right_until(90, "path")
+            else:
+                turn_left_until(90, "path")
+                move_forward_until(side_distance * 1.5, "path", "x")
+                turn_left_until(90, "path")
+            
+            facing_up = not facing_up
             reset_path_distance("y")
             start_path_distance("y")
 
         if distance_travelled_x >= 0.9 * PERIMETER_X:
-            turn_right_until(90, "path")
-            move_forward_until(0.9 * PERIMETER_X, "path", "y")
-            turn_right_until(90, "path")
+            move_backward_until(update_path_distance("x"), "path", "x")
+            if facing_up:
+                turn_left_until(90, "path")
+                move_backward_until(update_path_distance("y"), "path", "y")
+            else:
+                turn_left_until(90, "path")
+                facing_up = not facing_up
+                
             reset_path_distance("x")
             start_path_distance("x")
-        
+            reset_path_distance("y")
+            start_path_distance("y")
+    
         time.sleep(0.1)
             
 def object_event_off_path(object_distance, object_angle):
