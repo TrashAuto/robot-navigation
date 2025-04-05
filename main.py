@@ -1,13 +1,15 @@
 # Import libraries
 import math
 import time
+import threading
 
 # Import modules
 from motion import move_forward_until, move_backward_until, turn_left_until, turn_right_until
 from gpio import collect_garbage
 from classification import run_ml_pipeline
 from perception import detect_object_of_interest, is_tall_object_present
-from navigation import start_path_distance, update_path_distance, reset_path_distance
+from navigation import (start_path_distance, update_path_distance, reset_path_distance, start_deviation_angle,
+                        deviation_angle_correction)
 
 # Declare parameters (all distances in cm)
 PERIMETER_X = 750
@@ -46,13 +48,13 @@ def loop(PERIMETER_X, PERIMETER_Y, facing_up):
         
         if distance_travelled_y >= 0.9 * PERIMETER_Y:
             if facing_up:
-                turn_right_until(90, "path")
+                turn_right_until(90)
                 move_forward_until(side_distance * 1.5, "path", "x")
-                turn_right_until(90, "path")
+                turn_right_until(90)
             else:
-                turn_left_until(90, "path")
+                turn_left_until(90)
                 move_forward_until(side_distance * 1.5, "path", "x")
-                turn_left_until(90, "path")
+                turn_left_until(90)
             
             facing_up = not facing_up
             reset_path_distance("y")
@@ -61,10 +63,10 @@ def loop(PERIMETER_X, PERIMETER_Y, facing_up):
         if distance_travelled_x >= 0.9 * PERIMETER_X:
             move_backward_until(update_path_distance("x"), "path", "x")
             if facing_up:
-                turn_left_until(90, "path")
+                turn_left_until(90)
                 move_backward_until(update_path_distance("y"), "path", "y")
             else:
-                turn_left_until(90, "path")
+                turn_left_until(90)
                 facing_up = not facing_up
                 
             reset_path_distance("x")
@@ -76,24 +78,24 @@ def loop(PERIMETER_X, PERIMETER_Y, facing_up):
             
 def object_event_off_path(object_distance, object_angle):
     if object_angle < 0: 
-        turn_left_until(-object_angle, "object") 
+        turn_left_until(-object_angle) 
     else: 
-        turn_right_until(object_angle, "object")
+        turn_right_until(object_angle)
     
-    move_forward_until(object_distance - collection_distance, "object")
+    move_forward_until(object_distance - collection_distance)
     
     if not is_tall_object_present(object_distance * 1000) and run_ml_pipeline():
         collect_garbage()
         
-    move_backward_until(object_distance - collection_distance, "object")
+    move_backward_until(object_distance - collection_distance)
     
     if object_angle < 0:
-        turn_right_until(-object_angle, "object")
+        turn_right_until(-object_angle)
     else:
-        turn_left_until(object_angle, "object")
+        turn_left_until(object_angle)
         
 def object_event_on_path(object_distance, object_width):
-    move_forward_until(object_distance - collection_distance, "object")
+    move_forward_until(object_distance - collection_distance)
     if not is_tall_object_present(object_distance * 1000) and run_ml_pipeline():
         collect_garbage()
     else:
@@ -101,13 +103,16 @@ def object_event_on_path(object_distance, object_width):
         obstacle_event(object_width)
     
 def obstacle_event(object_width):
-    turn_right_until(90, "object")
+    turn_right_until(90)
     move_forward_until(3 * object_width)
-    turn_left_until(90, "object")
+    turn_left_until(90)
     move_forward_until(3 * object_width)
-    turn_left_until(90, "object")
+    turn_left_until(90)
     move_forward_until(3 * object_width)
-    turn_right_until(90, "object")
+    turn_right_until(90)
 
 if __name__ == "__main__":
+    start_deviation_angle()
+    thread_deviation_correction = threading.Thread(target=deviation_angle_correction, daemon=True)
+    thread_deviation_correction.start()
     loop(PERIMETER_X, PERIMETER_Y)

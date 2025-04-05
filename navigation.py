@@ -5,6 +5,7 @@ import busio
 import board
 from math import pi
 from gpiozero import Button
+import motion
 
 ## Rotary wheel encoder setup ##
 
@@ -70,21 +71,16 @@ imu_sensor = adafruit_bno055.BNO055_I2C(i2c)
 
 # State (z axis only for 2D angle tracking)
 filtered_gyro = 0.0  # Filtered angular velocity
-angle = 0.0
 
 # Filtering
 alpha = 0.1  # Low pass filter
 gyro_deadzone = 0.2  # Rudimentary high pass filter
 
-# Timer
-prev_time_imu = time.time()
-
 ## Navigation variables
 path_distance_x = 0.0       # Distance travelled on preset path (use to stay within perimeter)
 path_distance_y = 0.0       
-path_angle = 0.0            # Angle on preset path (use for maintaining heading or turning at end of preset path)
 garbage_distance = 0        # Distance travelled when collecting garbage (use to travel to and from detected objects)
-garbage_angle = 0.0         # Adjusted angle when collecting garbage (use to turn to and from detected objects)
+angle = 0.0                 # Adjusted angle when turning
 
 # Garbage distance tracking
 garbage_distance_flag = False
@@ -99,6 +95,7 @@ def start_garbage_distance():
     
 def update_garbage_distance(): # Update garbage distance with new pulses
     global garbage_distance, prev_left_garbage, prev_right_garbage
+    
     if garbage_distance_flag:
         delta_left_count = left_count - prev_left_garbage
         delta_right_count = right_count - prev_right_garbage
@@ -113,40 +110,6 @@ def reset_garbage_distance():
     global garbage_distance_flag, garbage_distance
     garbage_distance_flag = False
     garbage_distance = 0.0
-
-# Garbage angle tracking
-garbage_angle_flag = False
-initial_garbage_angle = 0.0
-
-def start_garbage_angle():
-    global garbage_angle_flag, initial_garbage_angle
-    garbage_angle_flag = True
-    initial_garbage_angle = angle
-    
-def update_garbage_angle():
-    global garbage_angle, filtered_gyro, prev_time_imu
-    if garbage_angle_flag:
-        # IMU calculations
-        current_time_imu = time.time()
-        dt = current_time_imu - prev_time_imu
-        prev_time_imu = current_time_imu
-        
-        gyro = imu_sensor.gyro
-        if gyro is not None:
-            raw_gyro = gyro[2] * 180 / pi
-            filtered_gyro = alpha * raw_gyro + (1 - alpha) * filtered_gyro  # Low pass filter
-            if abs(filtered_gyro) < gyro_deadzone: filtered_gyro = 0        # Rudimentry high pass filter
-            
-            # Integrate angular velocity to calculate angle
-            garbage_angle += filtered_gyro * dt
-            # Normalized angle difference
-            garbage_angle = (garbage_angle - initial_garbage_angle) % 360
-            
-    return garbage_angle
-        
-def reset_garbage_angle():
-    global garbage_angle_flag
-    garbage_angle_flag = False
 
 # Path distance tracking
 path_distance_flag = False
@@ -167,7 +130,7 @@ def update_path_distance(direction):
     global path_distance_x, path_distance_y
     
     if direction == "x":
-        if garbage_distance_flag or garbage_angle_flag:
+        if garbage_distance_flag:
             return path_distance_x
         if path_distance_flag:
             path_distance_x_new = (left_count + right_count) * cm_per_pulse / 2
@@ -175,7 +138,7 @@ def update_path_distance(direction):
         return path_distance_x
         
     elif direction == "y":
-        if garbage_distance_flag or garbage_angle_flag:
+        if garbage_distance_flag:
             return path_distance_y
         if path_distance_flag:
             path_distance_y_new = (left_count + right_count) * cm_per_pulse / 2
@@ -191,27 +154,75 @@ def reset_path_distance(direction):
     elif direction == "y":
         path_distance_y = 0.0
 
-# Path angle tracking
-path_angle_flag = False
-path_angle = 0.0
-path_angle_initial = 0.0
+# Turn angle tracking for perimeter turns and garbage collection
+angle_flag = False
+prev_angle_time = 0.0
+angle = 0.0
 
-def start_path_angle():
-    global path_angle_flag, path_angle_initial
-    path_angle_flag = True
-    path_angle_initial = angle
+def start_angle():
+    global angle_flag, prev_angle_time
+    angle_flag = True
+    prev_angle_time = time.time()
+    
+def update_angle():
+    global angle, filtered_gyro, prev_angle_time
+    
+    if angle_flag:
+        # IMU calculations
+        current_time_imu = time.time()
+        dt = current_time_imu - prev_angle_time
+        prev_angle_time = current_time_imu
+        
+        gyro = imu_sensor.gyro
+        if gyro is not None:
+            raw_gyro = gyro[2] * 180 / pi
+            filtered_gyro = alpha * raw_gyro + (1 - alpha) * filtered_gyro  # Low pass filter
+            if abs(filtered_gyro) < gyro_deadzone: filtered_gyro = 0        # Rudimentry high pass filter
+            
+            # Integrate angular velocity to calculate angle
+            angle += filtered_gyro * dt
+            # Normalize angle from 0 to 180 degrees
+            angle = (angle + 180) % 360 - 180
+            
+    return angle
+        
+def reset_angle():
+    global angle_flag, angle
+    angle_flag = False
+    angle = 0.0
 
-def update_path_angle():
-    global path_angle
-    if garbage_distance_flag or garbage_angle_flag:
-        return path_angle
+# Path angle tracking for deviation correction
+prev_deviation_angle_time = 0.0
+deviation_angle = 0.0
 
-    if path_angle_flag:
-        path_angle = (angle - path_angle_initial) % 360
+def start_deviation_angle():
+    global prev_deviation_angle_time
+    prev_deviation_angle_time = time.time()
 
-    return path_angle
+def update_deviation_angle():
+    global deviation_angle, filtered_gyro, prev_deviation_angle_time
+    
+    if not angle_flag:
+        current_time = time.time()
+        dt = current_time - prev_deviation_angle_time
+        prev_deviation_angle_time = current_time
 
-def reset_path_angle():
-    global path_angle_flag, path_angle, path_angle_initial
-    path_angle_flag = False
-    path_angle = 0.0
+        gyro = imu_sensor.gyro
+        if gyro is not None:
+            raw_gyro = gyro[2] * 180 / pi
+            filtered_gyro = alpha * raw_gyro + (1 - alpha) * filtered_gyro
+            if abs(filtered_gyro) < gyro_deadzone:
+                filtered_gyro = 0
+            deviation_angle += filtered_gyro * dt
+            deviation_angle = (deviation_angle + 180) % 360 - 180
+    
+    return deviation_angle
+
+def deviation_angle_correction():
+    while True:
+        deviation = update_deviation_angle()
+        if deviation > 10:
+            motion.turn_left_until(deviation)
+        elif deviation < -10:
+            motion.turn_right_until(-deviation)
+        time.sleep(0.1)

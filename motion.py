@@ -42,41 +42,27 @@ def move_backward_until(distance_cm, mode, direction):
         
         time.sleep(0.1)
 
-def turn_right_until(angle_deg, mode):
-    if mode == "path":
-        navigation.start_path_angle()
-    elif mode == "object":
-        navigation.start_garbage_angle()
+def turn_right_until(angle_deg):
+    navigation.start_angle()
     
     gpio.turn_right()
     
     while True:
-        if mode == "path":
-            angle = navigation.update_path_angle()
-        elif mode == "object":
-            angle = navigation.update_garbage_angle()
-            
+        angle = navigation.update_path_angle()
         if angle >= angle_deg:
             gpio.stop_turning()
             break
         
         time.sleep(0.1)
 
-def turn_left_until(angle_deg, mode):
-    if mode == "path":
-        navigation.start_path_angle()
-    elif mode == "object":
-        navigation.start_garbage_angle()
+def turn_left_until(angle_deg):
+    navigation.start_angle()
     
     gpio.turn_left()
     
     while True:
-        if mode == "path":
-            angle = navigation.update_path_angle()
-        elif mode == "object":
-            angle = navigation.update_garbage_angle()
-            
-        if angle >= angle_deg:
+        angle = navigation.update_path_angle()
+        if angle <= angle_deg:
             gpio.stop_turning()
             break
         
