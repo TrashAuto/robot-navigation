@@ -1,8 +1,10 @@
 import time
 import navigation
 import gpio
+from navigation import set_direction
 
 def move_forward_until(distance_cm, mode, direction=None):
+    set_direction(1)
     if mode == "path":
         navigation.start_path_distance(direction)
     elif mode == "object":
@@ -23,6 +25,7 @@ def move_forward_until(distance_cm, mode, direction=None):
         time.sleep(0.1)
 
 def move_backward_until(distance_cm, mode, direction=None):
+    set_direction(-1)
     if mode == "path":
         navigation.start_path_distance(direction)
     elif mode == "object":

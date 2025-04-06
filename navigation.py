@@ -29,6 +29,12 @@ left_distance = 0.0  # Total distance regardless of direction
 right_distance = 0.0
 start_time_encoder = time.time()
 
+# Motion direction
+current_direction = 1
+def set_direction(direction):
+    global current_direction
+    current_direction = direction
+
 # Noise rejection
 min_pulse_interval = 0.001  # Max pulse frequency @ 1000 Hz
 last_left_time = 0
@@ -43,16 +49,14 @@ def on_left_A():
     global left_count, last_left_time
     now = time.time()
     if now - last_left_time >= min_pulse_interval:
-        direction = -1 if left_B.is_pressed else 1
-        left_count += direction
+        left_count += current_direction
         last_left_time = now
 
 def on_right_A():
     global right_count, last_right_time
     now = time.time()
     if now - last_right_time >= min_pulse_interval:
-        direction = -1 if right_B.is_pressed else 1
-        right_count += direction
+        right_count += current_direction
         last_right_time = now
 
 # Set up channel A with rising (released) and falling (pressed) edges
