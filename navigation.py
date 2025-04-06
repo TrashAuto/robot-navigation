@@ -235,7 +235,7 @@ def update_deviation_angle():
         if abs(filtered_gyro) < gyro_deadzone:                          
             filtered_gyro = 0
 
-        # Integrate angular velocity to calculate deivation angle
+        # Integrate angular velocity to calculate deviation angle
         deviation_angle += filtered_gyro * dt
         # Normalize deviation angle from 0 to 180 degrees
         deviation_angle = (deviation_angle + 180) % 360 - 180

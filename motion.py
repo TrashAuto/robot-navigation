@@ -51,7 +51,7 @@ def turn_right_until(angle_deg):
     gpio.turn_right()
     
     while True:
-        angle = navigation.update_path_angle()
+        angle = navigation.update_angle()
         if angle >= angle_deg:
             gpio.stop_turning()
             break
@@ -64,7 +64,7 @@ def turn_left_until(angle_deg):
     gpio.turn_left()
     
     while True:
-        angle = navigation.update_path_angle()
+        angle = navigation.update_angle()
         if angle <= angle_deg:
             gpio.stop_turning()
             break
