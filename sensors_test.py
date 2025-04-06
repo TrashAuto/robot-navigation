@@ -2,17 +2,15 @@
 import time
 from gpiozero import Button
 from math import pi
-import adafruit_bno055
-import busio
-import board
+from smbus2 import SMBus
 
 ## Rotary wheel encoder setup ##
 
 # Declare GPIO pins and channels
-left_A = 4  # Left encoder, channel A, GPIO pin 4 (corresponds to pin 7)
-left_B = 17
-right_A = 27
-right_B = 22
+left_A = 5   # Updated GPIO pin
+left_B = 6
+right_A = 13
+right_B = 26
 
 # Encoder parameters
 ppr = 12
@@ -64,9 +62,14 @@ right_button.when_released = on_right_A
 
 ## BNO055 IMU setup ##
 
-# I2C setup
-i2c = busio.I2C(board.SCL, board.SDA)
-sensor = adafruit_bno055.BNO055_I2C(i2c)
+BNO055_ADDRESS = 0x28
+GYRO_DATA_ADDR = 0x14
+bus = SMBus(10)  # Using I2C bus 10
+
+def read_gyro_z():
+    data = bus.read_i2c_block_data(BNO055_ADDRESS, GYRO_DATA_ADDR, 6)
+    z = int.from_bytes(data[4:6], byteorder='little', signed=True)
+    return z / 16.0  # degrees/s
 
 # State (z axis only for 2D angle tracking)
 filtered_gyro = 0.0  # Filtered angular velocity
@@ -98,22 +101,20 @@ try:
         prev_time_imu = current_time_imu
         elapsed_imu = current_time_imu - start_time_imu
 
-        gyro = sensor.gyro
-        if gyro is not None:
-            raw_gyro = gyro[2] * 180 / pi
+        raw_gyro = read_gyro_z()
 
-            # Low pass filter
-            filtered_gyro = alpha * raw_gyro + (1 - alpha) * filtered_gyro
+        # Low pass filter
+        filtered_gyro = alpha * raw_gyro + (1 - alpha) * filtered_gyro
 
-            # High pass filter
-            if abs(filtered_gyro) < gyro_deadzone:
-                filtered_gyro = 0
+        # High pass filter
+        if abs(filtered_gyro) < gyro_deadzone:
+            filtered_gyro = 0
 
-            # Integrate angular velocity to calculate angle
-            angle += filtered_gyro * dt
+        # Integrate angular velocity to calculate angle
+        angle += filtered_gyro * dt
 
-            # Normalize angle from 0 to 360 degrees
-            angle = angle % 360 + 360
+        # Normalize angle from 0 to 360 degrees
+        angle = angle % 360 + 360
 
         # Print output
         print(f"Time (Encoder): {elapsed_encoder:.1f}s, Time (IMU): {elapsed_imu:.1f}s")
