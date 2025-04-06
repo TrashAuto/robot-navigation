@@ -1,10 +1,8 @@
 # Import libraries
 import time
-import adafruit_bno055
-import busio
-import board
 from math import pi
 from gpiozero import Button
+from smbus2 import SMBus
 import motion
 
 ## Rotary wheel encoder setup ##
@@ -69,9 +67,24 @@ right_button.when_released = on_right_A
 
 ## BNO055 IMU setup ##
 
-# I2C setup
-i2c = busio.I2C(board.SCL, board.SDA)
-imu_sensor = adafruit_bno055.BNO055_I2C(i2c)
+BNO055_ADDRESS = 0x28
+BNO055_CHIP_ID_ADDR = 0x00
+BNO055_OPR_MODE_ADDR = 0x3D
+BNO055_PWR_MODE_ADDR = 0x3E
+BNO055_UNIT_SEL_ADDR = 0x3B
+
+CONFIGMODE = 0X00
+NDOF_MODE = 0X0C
+
+GYRO_DATA_ADDR = 0x14
+
+bus = SMBus(1)
+
+# Read gyroscope data
+def read_gyro_z():
+    data = bus.read_i2c_block_data(BNO055_ADDRESS, GYRO_DATA_ADDR, 6)
+    z = int.from_bytes(data[4:6], byteorder='little', signed=True)
+    return z / 16.0  # degrees/s
 
 # State (z axis only for 2D angle tracking)
 filtered_gyro = 0.0  # Filtered angular velocity
@@ -170,23 +183,25 @@ def start_angle():
     
 def update_angle():
     global angle, filtered_gyro, prev_angle_time
-    
+            
     if angle_flag:
         # IMU calculations
         current_time_imu = time.time()
         dt = current_time_imu - prev_angle_time
         prev_angle_time = current_time_imu
-        
-        gyro = imu_sensor.gyro
-        if gyro is not None:
-            raw_gyro = gyro[2] * 180 / pi
-            filtered_gyro = alpha * raw_gyro + (1 - alpha) * filtered_gyro  # Low pass filter
-            if abs(filtered_gyro) < gyro_deadzone: filtered_gyro = 0        # Rudimentry high pass filter
-            
-            # Integrate angular velocity to calculate angle
-            angle += filtered_gyro * dt
-            # Normalize angle from 0 to 180 degrees
-            angle = (angle + 180) % 360 - 180
+         
+        raw_gyro = read_gyro_z()
+
+        # Low pass filter
+        filtered_gyro = alpha * raw_gyro + (1 - alpha) * filtered_gyro
+        # Rudimentary high pass filter
+        if abs(filtered_gyro) < gyro_deadzone:                          
+            filtered_gyro = 0
+
+        # Integrate angular velocity to calculate angle
+        angle += filtered_gyro * dt
+        # Normalize angle from 0 to 180 degrees
+        angle = (angle + 180) % 360 - 180
             
     return angle
         
@@ -207,20 +222,25 @@ def update_deviation_angle():
     global deviation_angle, filtered_gyro, prev_deviation_angle_time
     
     if not angle_flag:
-        current_time = time.time()
-        dt = current_time - prev_deviation_angle_time
-        prev_deviation_angle_time = current_time
+        # IMU calculations
+        current_time_imu = time.time()
+        dt = current_time_imu - prev_deviation_angle_time
+        prev_deviation_angle_time = current_time_imu
+         
+        raw_gyro = read_gyro_z()
 
-        gyro = imu_sensor.gyro
-        if gyro is not None:
-            raw_gyro = gyro[2] * 180 / pi
-            filtered_gyro = alpha * raw_gyro + (1 - alpha) * filtered_gyro
-            if abs(filtered_gyro) < gyro_deadzone:
-                filtered_gyro = 0
-            deviation_angle += filtered_gyro * dt
-            deviation_angle = (deviation_angle + 180) % 360 - 180
-    
-    return deviation_angle
+        # Low pass filter
+        filtered_gyro = alpha * raw_gyro + (1 - alpha) * filtered_gyro
+        # Rudimentary high pass filter
+        if abs(filtered_gyro) < gyro_deadzone:                          
+            filtered_gyro = 0
+
+        # Integrate angular velocity to calculate deivation angle
+        deviation_angle += filtered_gyro * dt
+        # Normalize deviation angle from 0 to 180 degrees
+        deviation_angle = (deviation_angle + 180) % 360 - 180
+            
+    return angle
 
 def deviation_angle_correction():
     while True:
