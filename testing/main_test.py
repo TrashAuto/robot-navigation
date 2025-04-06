@@ -10,9 +10,9 @@ from perception import detect_object_of_interest, is_tall_object_present
 from navigation import start_path_distance, update_path_distance, reset_path_distance
 
 # Declare parameters (all distances in cm)
-PERIMETER_X = 5
-PERIMETER_Y = 5
-observed_distance = 50
+PERIMETER_X = 20
+PERIMETER_Y = 20
+observed_distance = 5
 observed_angle = math.radians(45)
 side_distance = math.cos(observed_angle) * observed_distance / math.sin(observed_angle)
 collection_distance = 10 # Distance between garbage and LiDAR when collecting garbage
@@ -22,10 +22,10 @@ def loop(PERIMETER_X, PERIMETER_Y):
     start_path_distance("x")
     
     while True:
-        # Travel 50 cm and stop
-        move_forward_until(50, "path", "y")
+        # Travel 4.5 cm and stop
+        move_forward_until(4.5, "path", "y")
         
-        print("Travelled 50 cm, running LiDAR scan...")
+        print("Travelled 4.5 cm, running LiDAR scan...")
         
         # Run LiDAR scan after stopping
         object = detect_object_of_interest()
@@ -105,12 +105,15 @@ def object_event_on_path(object_distance, object_width):
     
 def obstacle_event(object_width):
     turn_right_until(90, "object")
-    move_forward_until(3 * object_width)
+    move_forward_until(3 * object_width, "path", "x")
+    print("Moved to the right.")
     turn_left_until(90, "object")
-    move_forward_until(3 * object_width)
-    turn_left_until(90, "object")
-    move_forward_until(3 * object_width)
+    move_forward_until(3 * object_width, "path", "y")
+    print("Moved forward.")
     turn_right_until(90, "object")
+    move_backward_until(3 * object_width, "path", "x")
+    print("Moved to the left.")
+    turn_left_until(90, "object")
 
 if __name__ == "__main__":
     loop(PERIMETER_X, PERIMETER_Y)
