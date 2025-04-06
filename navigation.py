@@ -8,10 +8,10 @@ import motion
 ## Rotary wheel encoder setup ##
 
 # Declare GPIO pins and channels
-left_A = 4  # Left encoder, channel A, GPIO pin 4 (corresponds to pin 7)
-left_B = 17
-right_A = 27
-right_B = 22
+left_A = 5  # Left encoder, channel A, GPIO pin 4 (corresponds to pin 7)
+left_B = 6
+right_A = 13
+right_B = 26
 
 # Encoder parameters
 ppr = 12
@@ -78,7 +78,7 @@ NDOF_MODE = 0X0C
 
 GYRO_DATA_ADDR = 0x14
 
-bus = SMBus(1)
+bus = SMBus(10) # I2C bus 10 since bus 1 doesn't work - GPIO pin 17 (SDA) and GPIO pin 27 (SCL)
 
 # Read gyroscope data
 def read_gyro_z():
