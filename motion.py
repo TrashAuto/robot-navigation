@@ -39,7 +39,7 @@ def move_backward_until(distance_cm, mode, direction=None):
         elif mode == "object":
             distance = navigation.update_garbage_distance()
             
-        if distance <= distance_cm:
+        if distance <= -distance_cm:
             gpio.stop_moving()
             break
         
