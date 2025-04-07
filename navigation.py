@@ -37,10 +37,6 @@ min_pulse_interval = 0.001  # Max pulse frequency @ 1000 Hz
 last_left_time = 0
 last_right_time = 0
 
-# Channel B input, disable internal pullup resistors as we have an external circuit
-left_B = Button(left_B, pull_up=False)
-right_B = Button(right_B, pull_up=False)
-
 # Interrupt handlers for Channel A
 def on_left_A():
     global left_count, last_left_time
