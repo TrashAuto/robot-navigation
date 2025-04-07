@@ -127,7 +127,7 @@ def object_event_off_path(object_distance, object_angle):
 
 def object_event_on_path(object_distance, object_width):
     print("Approaching object on path...")
-    move_forward_until(object_distance - collection_distance)
+    move_forward_until(object_distance - collection_distance, "path", "y")
     if not is_tall_object_present(object_distance * 10) and run_ml_pipeline():
         print("Garbage detected. Collecting...")
         collect_garbage()
