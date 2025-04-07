@@ -240,7 +240,7 @@ def update_deviation_angle():
         # Normalize deviation angle from 0 to 180 degrees
         deviation_angle = (deviation_angle + 180) % 360 - 180
             
-    return angle
+    return deviation_angle
 
 def deviation_angle_correction():
     while True:
