@@ -20,7 +20,10 @@ side_distance = math.cos(observed_angle) * observed_distance / math.sin(observed
 collection_distance = 10 # Distance between garbage and LiDAR when collecting garbage
 facing_up = True
 
-def loop(PERIMETER_X, PERIMETER_Y, facing_up):
+def loop(PERIMETER_X, PERIMETER_Y):
+    global facing_up
+    
+    # Initialize path distances
     start_path_distance("y")
     start_path_distance("x")
     
@@ -84,7 +87,7 @@ def object_event_off_path(object_distance, object_angle):
     
     move_forward_until(object_distance - collection_distance, "object")
     
-    if not is_tall_object_present(object_distance * 1000) and run_ml_pipeline():
+    if not is_tall_object_present(object_distance * 10) and run_ml_pipeline():
         collect_garbage()
         
     move_backward_until(object_distance - collection_distance, "object")
@@ -96,7 +99,7 @@ def object_event_off_path(object_distance, object_angle):
         
 def object_event_on_path(object_distance, object_width):
     move_forward_until(object_distance - collection_distance, "path", "y")
-    if not is_tall_object_present(object_distance * 1000) and run_ml_pipeline():
+    if not is_tall_object_present(object_distance * 10) and run_ml_pipeline():
         collect_garbage()
     else:
         # Move around object
