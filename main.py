@@ -82,12 +82,12 @@ def object_event_off_path(object_distance, object_angle):
     else: 
         turn_right_until(object_angle)
     
-    move_forward_until(object_distance - collection_distance)
+    move_forward_until(object_distance - collection_distance, "object")
     
     if not is_tall_object_present(object_distance * 1000) and run_ml_pipeline():
         collect_garbage()
         
-    move_backward_until(object_distance - collection_distance)
+    move_backward_until(object_distance - collection_distance, "object")
     
     if object_angle < 0:
         turn_right_until(-object_angle)
@@ -95,7 +95,7 @@ def object_event_off_path(object_distance, object_angle):
         turn_left_until(object_angle)
         
 def object_event_on_path(object_distance, object_width):
-    move_forward_until(object_distance - collection_distance)
+    move_forward_until(object_distance - collection_distance, "path", "y")
     if not is_tall_object_present(object_distance * 1000) and run_ml_pipeline():
         collect_garbage()
     else:
@@ -104,12 +104,12 @@ def object_event_on_path(object_distance, object_width):
     
 def obstacle_event(object_width):
     turn_right_until(90)
-    move_forward_until(3 * object_width)
+    move_forward_until(3 * object_width, "path", "x")
     turn_left_until(90)
-    move_forward_until(3 * object_width)
-    turn_left_until(90)
-    move_forward_until(3 * object_width)
+    move_forward_until(3 * object_width, "path", "y")
     turn_right_until(90)
+    move_backward_until(3 * object_width, "path", "x")
+    turn_left_until(90)
 
 if __name__ == "__main__":
     start_deviation_angle()
