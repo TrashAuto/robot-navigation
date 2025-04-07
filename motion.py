@@ -39,7 +39,7 @@ def move_backward_until(distance_cm, mode, direction=None):
         elif mode == "object":
             distance = navigation.update_garbage_distance()
             
-        if distance <= -distance_cm:
+        if distance <= -distance_cm: # distance_cm is passed as a positive value even if moving backward
             gpio.stop_moving()
             break
         
@@ -65,7 +65,7 @@ def turn_left_until(angle_deg):
     
     while True:
         angle = navigation.update_angle()
-        if angle <= angle_deg:
+        if angle <= -angle_deg: # angle_deg is passed as a positive value even if turning left
             gpio.stop_turning()
             break
         
