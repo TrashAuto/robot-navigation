@@ -3,7 +3,6 @@ import time
 from math import pi
 from gpiozero import Button
 from smbus2 import SMBus
-import motion
 
 ## Rotary wheel encoder setup ##
 
@@ -241,12 +240,3 @@ def update_deviation_angle():
         deviation_angle = (deviation_angle + 180) % 360 - 180
             
     return deviation_angle
-
-def deviation_angle_correction():
-    while True:
-        deviation = update_deviation_angle()
-        if deviation > 10:
-            motion.turn_left_until(deviation)
-        elif deviation < -10:
-            motion.turn_right_until(-deviation)
-        time.sleep(0.1)

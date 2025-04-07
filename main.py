@@ -9,7 +9,7 @@ from gpio import collect_garbage
 from classification import run_ml_pipeline
 from perception import detect_object_of_interest, is_tall_object_present
 from navigation import (start_path_distance, update_path_distance, reset_path_distance, start_deviation_angle,
-                        deviation_angle_correction)
+                        update_deviation_angle)
 
 # Declare parameters (all distances in cm)
 PERIMETER_X = 750
@@ -113,6 +113,15 @@ def obstacle_event(object_width):
     turn_right_until(90)
     move_backward_until(3 * object_width, "path", "x")
     turn_left_until(90)
+
+def deviation_angle_correction():
+    while True:
+        deviation = update_deviation_angle()
+        if deviation > 10:
+            turn_left_until(deviation)
+        elif deviation < -10:
+            turn_right_until(-deviation)
+        time.sleep(0.1)
 
 if __name__ == "__main__":
     start_deviation_angle()
