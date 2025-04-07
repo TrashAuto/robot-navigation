@@ -1,8 +1,6 @@
 import os
-import cv2
 import warnings
 import torch
-import numpy as np
 from torchvision import models, transforms
 from fastai.vision.all import load_learner, PILImage
 from picamera2 import Picamera2
