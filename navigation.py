@@ -40,14 +40,14 @@ def on_left_A():
     global left_count, last_left_time
     now = time.time()
     if now - last_left_time >= min_pulse_interval:
-        left_count += current_direction
+        left_count += 2*current_direction
         last_left_time = now
 
 def on_right_A():
     global right_count, last_right_time
     now = time.time()
     if now - last_right_time >= min_pulse_interval:
-        right_count += current_direction
+        right_count += 2*current_direction
         last_right_time = now
 
 # Set up channel A with rising (released) and falling (pressed) edges
