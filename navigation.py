@@ -7,10 +7,8 @@ from smbus2 import SMBus
 ## Rotary wheel encoder setup ##
 
 # Declare GPIO pins and channels
-left_A = 5  # Left encoder, channel A, GPIO pin 4 (corresponds to pin 7)
-left_B = 6
-right_A = 13
-right_B = 26
+left_A = 5  # Left encoder, channel A, GPIO pin 5 (corresponds to pin 7)
+right_A = 6
 
 # Encoder parameters
 ppr = 12
