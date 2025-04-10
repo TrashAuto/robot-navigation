@@ -7,7 +7,7 @@ from perception import is_tall_object_present
 def demo_loop():
     while True:
         print("Moving forward...")
-        move_forward_until(30, mode="path", direction="x")  # move 30cm forward
+        move_forward_until(30, mode="path", direction="y")  # move 30cm forward
         print("Stopped. Running garbage detection...")
 
         if not is_tall_object_present:
@@ -20,7 +20,7 @@ def demo_loop():
             print("No garbage detected.")
 
         print("Reversing...")
-        move_backward_until(30, mode="path")  # move 30cm backward
+        move_backward_until(30, mode="path", direction="y")  # move 30cm backward
 
         print("Cycle complete. Restarting...\n")
         time.sleep(1)
